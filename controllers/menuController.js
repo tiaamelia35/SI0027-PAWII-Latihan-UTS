@@ -29,9 +29,57 @@ exports.getAll = async (req, res) => {
 
 
   //Pagination
-  const page = Math.max(1, parseInt)
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(
+    MAX_LIMIT,
+    Math.max(1, parseInt(req.query.limit, 10) || 10)
+  );
 
+  const skip = (page - 1) * limit;
+
+  //Sorting (Ascending) berdasarkan createdAt
+  const sort = req.query.sort || "createdAt";
+  const sortOption = { [sort]: 1};
+
+
+  //Query utk ambil data menu
+  let query = Menu.find(filter)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .populate("kantinId");
+
+
+  //Projection: milih field yang ingin ditampilkan
+  if (req.query.fields) {
+    const fields = req.query.fields
+      .split(",")
+      .map(field => field.trim())
+      .filter(Boolean);
+
+      //pastiin kantinId tetap tersedia agar bisa di-populate
+      if (!fields.includes("kantinId")) {
+        field.push("kantinId");
+      }
+
+      query = query.select(fields.join(" "));
+  }
+
+  const data = await query;
+
+
+  //Total seluruh dokumen yg cocok dgn Filter
+  const total = await Menu.countDocuments(filter);
+
+  res.status(200).json({
+    data,
+    page,
+    limit,
+    total
+  });
 };
+
+
 
 // GET /menu/:id
 //   - 200 -> dokumen menu, kantinId ter-populate
@@ -39,6 +87,17 @@ exports.getAll = async (req, res) => {
 //   - format id salah -> 400 (ditangani errorHandler lewat CastError)
 exports.getById = async (req, res) => {
   // TODO B2
+  const menu = await Menu.findById(req.params.id)
+    .populate("kantinId");
+
+  if (!menu) {
+    throw {
+      status: 404,
+      message: "Menu tidak ditemukan"
+    };
+  }
+
+  res.status(200).json(menu);
 };
 
 // POST /menu
@@ -46,6 +105,10 @@ exports.getById = async (req, res) => {
 //   - validasi gagal / ISBN duplikat -> 400 (ditangani errorHandler)
 exports.create = async (req, res) => {
   // TODO B3
+  const menu = new Menu(req.body);
+  const savedMenu = await menu.save();
+
+  res.status(201).json(savedMenu);
 };
 
 // PUT /menu/:id
@@ -54,6 +117,23 @@ exports.create = async (req, res) => {
 //   - tidak ada -> 404 { message }
 exports.update = async (req, res) => {
   // TODO B4
+  const menu = await Menu.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+
+  if (!menu) {
+    throw {
+      status: 400,
+      message: "Menu tidak ditemukan"
+    };
+  }
+
+  res.status(200).json(menu);
 };
 
 // DELETE /menu/:id
@@ -61,4 +141,14 @@ exports.update = async (req, res) => {
 //   - tidak ada -> 404 { message }
 exports.remove = async (req, res) => {
   // TODO B5
+  const menu = await Menu.findByIdAndDelete(req.params.id);
+
+  if(!menu) {
+    throw {
+      status: 404,
+      message: "Menu tidak ditemukan"
+    };
+  }
+
+  res.status(204).end();
 };
