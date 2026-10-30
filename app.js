@@ -12,7 +12,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const kantinRoutes = require("./routes/kantinRoutes");
+
 // TODO C2: require route menu dari ./routes/menuRoutes
+const menuRoutes = require("./routes/menuRoutes")
+
 // TODO D2: require middleware errorHandler dari ./middlewares/errorHandler
 
 app.use(cors());

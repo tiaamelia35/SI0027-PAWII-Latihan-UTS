@@ -20,6 +20,17 @@ const MAX_LIMIT = 100;
 //   - data memuat kantinId yang ter-populate (objek Kantin)
 exports.getAll = async (req, res) => {
   // TODO B1
+  const filter = {};
+
+  // Filter berdasarkan Kantin
+  if (req.query.kantinId) {
+    filter.kantinId = req.query.kantinId;
+  }
+
+
+  //Pagination
+  const page = Math.max(1, parseInt)
+
 };
 
 // GET /menu/:id
