@@ -46,8 +46,12 @@ exports.getAll = async (req, res) => {
   let query = Menu.find(filter)
     .sort(sortOption)
     .skip(skip)
-    .limit(limit)
-    .populate("kantinId");
+    .limit(limit);
+
+    // Populate kantinId hanya jika tidak menggunakan projection atau jika kantinId diminta secara eksplisit
+if (!req.query.fields || req.query.fields.split(",").map(f => f.trim()).includes("kantinId")) {
+    query = query.populate("kantinId");
+}
 
 
   //Projection: milih field yang ingin ditampilkan
@@ -57,12 +61,7 @@ exports.getAll = async (req, res) => {
       .map(field => field.trim())
       .filter(Boolean);
 
-      //pastiin kantinId tetap tersedia agar bisa di-populate
-      if (!fields.includes("kantinId")) {
-        field.push("kantinId");
-      }
-
-      query = query.select(fields.join(" "));
+    query = query.select(fields.join(" "));
   }
 
   const data = await query;
@@ -128,7 +127,7 @@ exports.update = async (req, res) => {
 
   if (!menu) {
     throw {
-      status: 400,
+      status: 404,
       message: "Menu tidak ditemukan"
     };
   }

@@ -24,7 +24,7 @@ const mongoose = require("mongoose");
 const giziSchema = new mongoose.Schema(
     {
         kalori: {
-            type: Number;
+            type: Number,
             required: true,
             min: 0,
             max: 5000
